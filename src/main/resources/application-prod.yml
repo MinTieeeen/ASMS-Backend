@@ -1,0 +1,23 @@
+# Production: every secret comes from environment variables; never commit real values.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      url: ${REDIS_URL}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
+springdoc:
+  swagger-ui:
+    enabled: false
+
+logging:
+  structured:
+    format:
+      console: ecs # Structured JSON logs (NFR18)
