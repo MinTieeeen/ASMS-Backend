@@ -28,6 +28,11 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  data:
+    redis:
+      # Short timeouts: when Redis is down, auth keeps working without blocklist and rate limits (NFR-AUTH-10)
+      timeout: 1s
+      connect-timeout: 1s
   cache:
     type: redis
     redis:
@@ -63,7 +68,29 @@ app:
   jwt:
     secret: ${APP_JWT_SECRET}
     issuer: asms
-    access-token-ttl: 15m # NFR06
-    refresh-token-ttl: 7d
+    key-id: ${APP_JWT_KEY_ID:k1} # "kid" header, allows key rotation
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  auth: # Auth specification section 7.10
+    access-token-ttl: 15m # BR-AUTH-07
+    refresh-ttl-remember: 30d # BR-AUTH-05
+    refresh-ttl-default: 12h # BR-AUTH-05
+    session-absolute-ttl: 30d # BR-AUTH-06
+    max-sessions-per-user: 10 # BR-AUTH-08
+    lockout:
+      max-attempts: 5 # BR-AUTH-04
+      duration: 15m
+    activation-token-ttl: 72h # BR-AUTH-11
+    reset-token-ttl: 30m # BR-AUTH-11
+    refresh-race-window: 5s # Section 7.3
+    cleanup-grace-period: 7d # NFR-AUTH-09
+    event-retention: 180d # NFR-AUTH-14
+    cookie:
+      name: rt
+      path: /api/v1/auth
+      domain: ${APP_AUTH_COOKIE_DOMAIN:}
+      secure: ${APP_AUTH_COOKIE_SECURE:true} # NFR-AUTH-05
+  bootstrap-admin: # FR-AUTH-24
+    email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+    full-name: ${APP_BOOTSTRAP_ADMIN_FULL_NAME:Quản trị viên}

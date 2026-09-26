@@ -27,7 +27,8 @@ Libraries chosen by the requirement but **added only when the feature needs them
 ## Commands
 
 ```bash
-docker compose up -d                 # (repo root) Postgres, Redis, MinIO, Mailpit
+docker compose up -d                 # (this folder) Postgres, Redis, Mailpit - copy .env.example to .env first
+docker compose --profile app up -d --build  # Same infrastructure plus the API container (Dockerfile)
 ./mvnw spring-boot:run               # Run the API, default profile: local
 ./mvnw spring-boot:test-run          # Run against Testcontainers instead of docker compose
 ./mvnw test                          # All tests (integration tests need Docker running)
@@ -36,7 +37,8 @@ docker compose up -d                 # (repo root) Postgres, Redis, MinIO, Mailp
 ./mvnw verify                        # Full build + tests (what CI runs, plus spotless:check)
 ```
 
-Local URLs: Swagger UI http://localhost:8080/swagger-ui.html - Mailpit http://localhost:8025 - MinIO console http://localhost:9001.
+Local URLs: Swagger UI http://localhost:8080/swagger-ui.html - Mailpit http://localhost:8025.
+Object storage (F05.07) is not in docker-compose yet: `minio/minio` is no longer published on Docker Hub, pick an S3-compatible replacement when attachments are built.
 Profiles: `local` (default), `test`, `prod` (all secrets from environment variables).
 
 ## Project structure at a glance

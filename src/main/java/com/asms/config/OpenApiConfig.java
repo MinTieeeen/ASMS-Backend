@@ -1,10 +1,12 @@
 package com.asms.config;
 
+import com.asms.dto.common.ClientInfo;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * (Orval).
  *
  * @author MinhTien
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-09-26
  * @modified 2026-09-26
  */
@@ -21,6 +23,11 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     private static final String BEARER_SCHEME = "bearerAuth";
+
+    static {
+        // Resolved from the request by ClientInfoArgumentResolver, not sent by clients
+        SpringDocUtils.getConfig().addRequestWrapperToIgnore(ClientInfo.class);
+    }
 
     @Bean
     OpenAPI asmsOpenApi() {

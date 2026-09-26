@@ -1,4 +1,4 @@
-# Local environment: uses docker-compose.yml at the repository root (Postgres, Redis, MinIO, Mailpit).
+# Local environment: uses asms-backend/docker-compose.yml (Postgres, Redis, Mailpit).
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/asms
@@ -20,6 +20,9 @@ app:
   jwt:
     # LOCAL ONLY. Other environments must provide APP_JWT_SECRET (>= 32 characters).
     secret: ${APP_JWT_SECRET:local-dev-secret-change-me-at-least-32-chars}
+  auth:
+    cookie:
+      secure: ${APP_AUTH_COOKIE_SECURE:false} # Plain HTTP on localhost
 
 logging:
   level:

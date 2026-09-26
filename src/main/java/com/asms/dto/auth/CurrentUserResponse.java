@@ -1,0 +1,23 @@
+package com.asms.dto.auth;
+
+import com.asms.entity.user.SystemRole;
+import java.time.Instant;
+import java.util.UUID;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * The signed-in user (API-AUTH-05), also embedded in login and refresh responses.
+ *
+ * @author MinhTien
+ * @version 1.0.0
+ * @since 2026-09-26
+ * @modified 2026-09-26
+ */
+public record CurrentUserResponse(
+        UUID id,
+        String email,
+        String fullName,
+        @Nullable String avatarUrl,
+        @Nullable String studentCode,
+        SystemRole systemRole,
+        @Nullable Instant passwordChangedAt) {}

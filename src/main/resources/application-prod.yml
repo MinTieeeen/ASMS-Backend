@@ -13,6 +13,10 @@ spring:
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
 
+server:
+  # Behind the reverse proxy: take the client IP from trusted X-Forwarded-For only (rate limits, session IPs)
+  forward-headers-strategy: native
+
 springdoc:
   swagger-ui:
     enabled: false
