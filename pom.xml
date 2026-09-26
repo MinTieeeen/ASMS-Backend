@@ -25,6 +25,7 @@
         <bucket4j.version>8.20.0</bucket4j.version>
         <uap-java.version>1.6.1</uap-java.version>
         <bouncycastle.version>1.86</bouncycastle.version>
+        <jobrunr.version>8.8.2</jobrunr.version>
     </properties>
 
     <dependencies>
@@ -110,6 +111,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Persistent background jobs with retries: email delivery (NFR-AUTH-08) -->
+        <dependency>
+            <groupId>org.jobrunr</groupId>
+            <artifactId>jobrunr-spring-boot-4-starter</artifactId>
+            <version>${jobrunr.version}</version>
         </dependency>
 
         <!-- ===== Observability ===== -->

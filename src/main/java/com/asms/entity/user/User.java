@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
  * {@code @Version} protects the failed-login counter against concurrent updates.
  *
  * @author MinhTien
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-09-26
  * @modified 2026-09-26
  */
@@ -91,6 +91,10 @@ public class User extends BaseEntity {
     @Nullable
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 5)
+    private Language language = Language.DEFAULT;
 
     @Nullable
     @Column(name = "created_by")
@@ -182,6 +186,10 @@ public class User extends BaseEntity {
         passwordHash = newPasswordHash;
         passwordChangedAt = now;
         clearTemporaryLock();
+    }
+
+    public void changeLanguage(Language newLanguage) {
+        language = newLanguage;
     }
 
     private void clearTemporaryLock() {

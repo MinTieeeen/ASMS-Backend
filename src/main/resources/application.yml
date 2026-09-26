@@ -52,6 +52,20 @@ springdoc:
     path: /swagger-ui.html
   packages-to-scan: com.asms
 
+jobrunr: # Email queue (NFR-AUTH-08); tables jobrunr_* are created by JobRunr itself
+  background-job-server:
+    enabled: true
+    worker-count: 4
+  jobs:
+    default-number-of-retries: 0 # AuthMailJob schedules its own retries (1, 5, 15 minutes)
+    # Job arguments contain email links with one-time tokens: keep finished jobs as briefly as possible
+    delete-succeeded-jobs-after: 1h
+    permanently-delete-deleted-jobs-after: 1h
+  dashboard:
+    enabled: false
+  miscellaneous:
+    allow-anonymous-data-usage: false
+
 management:
   endpoints:
     web:
@@ -90,6 +104,8 @@ app:
       path: /api/v1/auth
       domain: ${APP_AUTH_COOKIE_DOMAIN:}
       secure: ${APP_AUTH_COOKIE_SECURE:true} # NFR-AUTH-05
+  mail:
+    from: ${APP_MAIL_FROM:ASMS <no-reply@asms.local>}
   bootstrap-admin: # FR-AUTH-24
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}

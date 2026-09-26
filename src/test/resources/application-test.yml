@@ -1,7 +1,16 @@
-# Test profile: fake secret and a cookie usable over plain HTTP in MockMvc.
+# Test profile: fake secret, cookie usable over plain HTTP in MockMvc, no email is ever delivered.
+spring:
+  mail:
+    host: localhost
+    port: 3025 # Nothing listens here; tests mock AuthMailService or only enqueue jobs
+
 app:
   jwt:
     secret: test-secret-key-must-be-at-least-32-characters
   auth:
     cookie:
       secure: false
+
+jobrunr:
+  background-job-server:
+    enabled: false

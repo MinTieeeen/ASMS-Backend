@@ -32,7 +32,11 @@ public record AppProperties(
         @Valid @NotNull Jwt jwt,
         @Valid @NotNull Cors cors,
         @Valid @NotNull Auth auth,
-        @Valid @NotNull BootstrapAdmin bootstrapAdmin) {
+        @Valid @NotNull BootstrapAdmin bootstrapAdmin,
+        @Valid @NotNull Mail mail) {
+
+    /** Outgoing email settings (section 7.9). {@code frontendUrl} is the base of every link in emails. */
+    public record Mail(@NotBlank String from) {}
 
     /** Signing settings of the access token (section 7.2). The secret must be at least 256 bits. */
     public record Jwt(
