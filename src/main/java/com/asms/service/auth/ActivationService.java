@@ -46,7 +46,8 @@ public class ActivationService {
     public ActivationTokenInfoResponse validateActivationToken(TokenRequest request) {
         UserToken token = requireActivationToken(request.token());
         User user = token.getUser();
-        return new ActivationTokenInfoResponse(user.getEmail(), user.getFullName(), token.getExpiresAt());
+        return new ActivationTokenInfoResponse(
+                user.getEmail(), user.getUserCode(), user.getFullName(), token.getExpiresAt());
     }
 
     /**

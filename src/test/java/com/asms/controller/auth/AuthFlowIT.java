@@ -14,6 +14,7 @@ import com.asms.TestcontainersConfiguration;
 import com.asms.entity.user.SystemRole;
 import com.asms.entity.user.User;
 import com.asms.repository.user.UserRepository;
+import com.asms.support.TestUserCodes;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
@@ -58,8 +59,8 @@ class AuthFlowIT {
     @BeforeEach
     void createUser() {
         email = "user" + System.nanoTime() + "@gmail.com";
-        userRepository.save(
-                User.createBootstrapAdmin(email, "Nguyen Van A", passwordEncoder.encode(PASSWORD), Instant.now()));
+        userRepository.save(User.createBootstrapAdmin(
+                email, TestUserCodes.codeFor(email), "Nguyen Van A", passwordEncoder.encode(PASSWORD), Instant.now()));
     }
 
     @Test
@@ -106,10 +107,10 @@ class AuthFlowIT {
     void login_shouldReturnFieldErrors_whenBodyInvalid() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"not-an-email\",\"password\":\"\"}"))
+                        .content("{\"userCode\":\" \",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.errors[?(@.field == 'email')].code").value("INVALID_FORMAT"))
+                .andExpect(jsonPath("$.errors[?(@.field == 'userCode')].code").value("REQUIRED"))
                 .andExpect(jsonPath("$.errors[?(@.field == 'password')].code").value("REQUIRED"));
     }
 
@@ -227,7 +228,8 @@ class AuthFlowIT {
     @DisplayName("BR-AUTH-15: a USER cannot reach admin endpoints")
     void adminEndpoints_shouldRejectUserRole() throws Exception {
         String userEmail = "plain" + System.nanoTime() + "@gmail.com";
-        User user = User.createPending(userEmail, "Plain User", null, SystemRole.USER, null);
+        User user =
+                User.createPending(userEmail, "Plain User", TestUserCodes.codeFor(userEmail), SystemRole.USER, null);
         user.activate(passwordEncoder.encode(PASSWORD), Instant.now());
         userRepository.save(user);
         String accessToken = accessToken(login(userEmail));
@@ -253,8 +255,8 @@ class AuthFlowIT {
                 })
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                        {"email":"%s","password":"%s","rememberMe":%s}
-                        """.formatted(loginEmail, password, rememberMe));
+                        {"userCode":"%s","password":"%s","rememberMe":%s}
+                        """.formatted(TestUserCodes.codeFor(loginEmail), password, rememberMe));
     }
 
     private static MockHttpServletRequestBuilder refreshRequest(Cookie rt) {

@@ -2,6 +2,7 @@ package com.asms.entity.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.asms.support.TestUserCodes;
 import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +14,8 @@ class UserTest {
 
     @Test
     void createPending_shouldHaveNoPasswordAndPendingStatus() {
-        User user = User.createPending("a@gmail.com", "Nguyen Van A", null, SystemRole.USER, null);
+        User user = User.createPending(
+                "a@gmail.com", "Nguyen Van A", TestUserCodes.codeFor("a@gmail.com"), SystemRole.USER, null);
 
         assertThat(user.isPendingActivation()).isTrue();
         assertThat(user.hasPassword()).isFalse();
@@ -21,7 +23,8 @@ class UserTest {
 
     @Test
     void activate_shouldSetPasswordStatusAndTimestamps() {
-        User user = User.createPending("a@gmail.com", "Nguyen Van A", null, SystemRole.USER, null);
+        User user = User.createPending(
+                "a@gmail.com", "Nguyen Van A", TestUserCodes.codeFor("a@gmail.com"), SystemRole.USER, null);
 
         user.activate("hash", NOW);
 
@@ -97,6 +100,7 @@ class UserTest {
     }
 
     private static User activeUser() {
-        return User.createBootstrapAdmin("admin@gmail.com", "Admin", "hash", NOW.minusSeconds(3600));
+        return User.createBootstrapAdmin(
+                "admin@gmail.com", TestUserCodes.codeFor("admin@gmail.com"), "Admin", "hash", NOW.minusSeconds(3600));
     }
 }

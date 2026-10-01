@@ -14,7 +14,7 @@ CREATE TABLE user_sessions (
     ,   absolute_expires_at timestamptz  NOT NULL
     ,   revoked_at          timestamptz
     ,   revoke_reason       varchar(30)
-    ,   updated_at          timestamptz  NOT NULL DEFAULT now()
+    ,   updated_at          timestamptz  NOT NULL DEFAULT now(),
 
     -- Constraint --
     CONSTRAINT pk_user_sessions 

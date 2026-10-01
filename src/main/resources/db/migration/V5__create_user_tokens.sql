@@ -10,7 +10,7 @@ CREATE TABLE user_tokens (
     ,   invalidated_at timestamptz
     ,   created_by     uuid
     ,   request_ip     varchar(45)
-    ,   created_at     timestamptz NOT NULL DEFAULT now()
+    ,   created_at     timestamptz NOT NULL DEFAULT now(),
 
     CONSTRAINT pk_user_tokens 
         PRIMARY KEY (id),

@@ -19,7 +19,7 @@ public record CurrentUserResponse(
         String email,
         String fullName,
         @Nullable String avatarUrl,
-        @Nullable String studentCode,
+        String userCode,
         SystemRole systemRole,
         Language language,
         @Nullable Instant passwordChangedAt) {}

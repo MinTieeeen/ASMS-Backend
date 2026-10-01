@@ -3,6 +3,7 @@ package com.asms.entity.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.asms.entity.user.User;
+import com.asms.support.TestUserCodes;
 import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +71,7 @@ class UserSessionTest {
     }
 
     private static User user() {
-        return User.createBootstrapAdmin("admin@gmail.com", "Admin", "hash", NOW);
+        return User.createBootstrapAdmin(
+                "admin@gmail.com", TestUserCodes.codeFor("admin@gmail.com"), "Admin", "hash", NOW);
     }
 }

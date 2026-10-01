@@ -8,6 +8,9 @@
       <p
         th:replace="~{layout.html :: paragraph(#{email.welcomeActivation.intro})}"
       ></p>
+      <p
+        th:replace="~{layout.html :: paragraph(#{email.welcomeActivation.loginId(${userCode})})}"
+      ></p>
       <th:block
         th:replace="~{layout.html :: action(${link}, #{email.welcomeActivation.action})}"
       ></th:block>

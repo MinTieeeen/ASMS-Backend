@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Account activation endpoints (API-AUTH-09, 10). The activation token travels in the body, never in the URL.
  *
  * @author MinhTien
- * @version 1.0.0
+ * @version 1.0.1
  * @since 2026-09-26
  * @modified 2026-09-26
  */
@@ -37,6 +37,7 @@ public class ActivationController {
     @PostMapping(ApiPaths.Auth.ACTIVATION_VALIDATE)
     @SecurityRequirements
     @Operation(operationId = "validateActivationToken", summary = "Check an activation link (API-AUTH-09)")
+    @ApiResponse(responseCode = "200", description = "The link can be used")
     @ApiResponse(responseCode = "400", description = "AUTH_TOKEN_INVALID with reason NOT_FOUND, EXPIRED or USED")
     @ApiResponse(responseCode = "409", description = "AUTH_ACCOUNT_ALREADY_ACTIVE")
     public ActivationTokenInfoResponse validateActivationToken(@Valid @RequestBody TokenRequest request) {

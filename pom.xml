@@ -26,6 +26,7 @@
         <uap-java.version>1.6.1</uap-java.version>
         <bouncycastle.version>1.86</bouncycastle.version>
         <jobrunr.version>8.8.2</jobrunr.version>
+        <shedlock.version>7.10.1</shedlock.version>
     </properties>
 
     <dependencies>
@@ -118,6 +119,18 @@
             <groupId>org.jobrunr</groupId>
             <artifactId>jobrunr-spring-boot-4-starter</artifactId>
             <version>${jobrunr.version}</version>
+        </dependency>
+
+        <!-- Scheduled jobs run on one instance only (AuthCleanupJob, NFR-AUTH-09) -->
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-spring</artifactId>
+            <version>${shedlock.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-provider-redis-spring</artifactId>
+            <version>${shedlock.version}</version>
         </dependency>
 
         <!-- ===== Observability ===== -->

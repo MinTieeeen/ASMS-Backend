@@ -15,6 +15,7 @@ import com.asms.exception.BusinessException;
 import com.asms.exception.ErrorCode;
 import com.asms.repository.auth.UserTokenRepository;
 import com.asms.support.TestProperties;
+import com.asms.support.TestUserCodes;
 import com.asms.util.TokenHasher;
 import java.time.Clock;
 import java.time.Duration;
@@ -41,7 +42,8 @@ class UserTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = User.createPending("a@gmail.com", "Nguyen Van A", null, SystemRole.USER, null);
+        user = User.createPending(
+                "a@gmail.com", "Nguyen Van A", TestUserCodes.codeFor("a@gmail.com"), SystemRole.USER, null);
         user.setId(UUID.randomUUID());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }

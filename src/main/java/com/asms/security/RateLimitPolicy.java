@@ -5,7 +5,8 @@ import lombok.Getter;
 
 /**
  * Rate limits of the Auth module and their Redis key prefixes (BR-AUTH-09, BR-AUTH-10, UC-AUTH-08; Redis sheet of the
- * table description). Subjects that are personal data (emails) are hashed before they become part of a key.
+ * table description). Subjects that are personal data (emails, user IDs) are hashed before they become part of a
+ * key.
  *
  * @author MinhTien
  * @version 1.0.0
@@ -15,7 +16,7 @@ import lombok.Getter;
 @Getter
 public enum RateLimitPolicy {
     LOGIN_IP("rl:login:ip:", 10, Duration.ofMinutes(1)),
-    LOGIN_EMAIL("rl:login:email:", 20, Duration.ofHours(1)),
+    LOGIN_USER_CODE("rl:login:user-code:", 20, Duration.ofHours(1)),
     FORGOT_PASSWORD_EMAIL("rl:forgot:email:", 3, Duration.ofHours(1)),
     FORGOT_PASSWORD_IP("rl:forgot:ip:", 10, Duration.ofHours(1)),
     CHANGE_PASSWORD_USER("rl:change-password:user:", 10, Duration.ofHours(1)),

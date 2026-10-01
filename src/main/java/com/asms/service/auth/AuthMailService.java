@@ -54,6 +54,7 @@ public class AuthMailService {
                 user.getLanguage(),
                 Map.of(
                         "fullName", user.getFullName(),
+                        "userCode", user.getUserCode(),
                         "link", link("/activate", rawToken),
                         "expiresAt", formatDateTime(expiresAt, user.getLanguage()))));
     }

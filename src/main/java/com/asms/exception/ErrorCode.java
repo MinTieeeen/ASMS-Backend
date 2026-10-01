@@ -33,7 +33,7 @@ public enum ErrorCode {
     AUTH_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "Gửi yêu cầu quá nhiều, vui lòng thử lại sau"),
 
     // ===== Auth: login and account state =====
-    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không đúng"),
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "ID người dùng hoặc mật khẩu không đúng"),
     AUTH_ACCOUNT_TEMP_LOCKED(HttpStatus.LOCKED, "Tài khoản đang bị khóa tạm (BR-AUTH-04)"),
     AUTH_ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "Tài khoản đã bị khóa bởi quản trị viên"),
     AUTH_ACCOUNT_ALREADY_ACTIVE(HttpStatus.CONFLICT, "Tài khoản đã được kích hoạt"),
@@ -54,7 +54,7 @@ public enum ErrorCode {
     // ===== User =====
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"),
     USER_EMAIL_EXISTS(HttpStatus.CONFLICT, "Email đã được sử dụng"),
-    USER_STUDENT_CODE_EXISTS(HttpStatus.CONFLICT, "MSSV đã được sử dụng"),
+    USER_CODE_EXISTS(HttpStatus.CONFLICT, "ID người dùng đã được sử dụng"),
     USER_NOT_PENDING(HttpStatus.CONFLICT, "Tài khoản không ở trạng thái chờ kích hoạt"),
 
     // ===== Group =====

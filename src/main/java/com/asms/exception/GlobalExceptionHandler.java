@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -22,9 +23,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * {@code {field, code, message}} (Auth specification section 7.7).
  *
  * @author MinhTien
- * @version 2.0.0
+ * @version 2.1.0
  * @since 2026-09-26
- * @modified 2026-09-26
+ * @modified 2026-09-27
  */
 @Slf4j
 @RestControllerAdvice
@@ -52,6 +53,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
         return ProblemDetailFactory.create(ErrorCode.AUTH_FORBIDDEN);
+    }
+
+    /** Sorting a page by an unknown property ({@code ?sort=unknown}) is a client error, not a server error. */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ProblemDetail handleUnknownSortProperty(PropertyReferenceException ex) {
+        return ProblemDetailFactory.create(
+                ErrorCode.VALIDATION_ERROR,
+                ErrorCode.VALIDATION_ERROR.getDefaultMessage(),
+                Map.of(ProblemDetailFactory.ERRORS, List.of(new FieldError("sort", "INVALID", ex.getMessage()))));
     }
 
     @ExceptionHandler(Exception.class)

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.asms.TestcontainersConfiguration;
 import com.asms.entity.user.User;
+import com.asms.support.TestUserCodes;
 import java.time.Instant;
 import java.util.List;
 import org.jobrunr.jobs.Job;
@@ -68,6 +69,6 @@ class AuthMailServiceIT {
     }
 
     private static User user(String email) {
-        return User.createBootstrapAdmin(email, "Nguyen Van A", "hash", Instant.now());
+        return User.createBootstrapAdmin(email, TestUserCodes.codeFor(email), "Nguyen Van A", "hash", Instant.now());
     }
 }

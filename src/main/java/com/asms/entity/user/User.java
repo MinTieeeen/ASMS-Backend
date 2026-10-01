@@ -41,9 +41,9 @@ public class User extends BaseEntity {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Nullable
-    @Column(name = "student_code", length = 20)
-    private String studentCode;
+    /** User ID, the sign-in identifier: the MSSV of a student, a code such as ADMIN for an Admin; stored uppercase */
+    @Column(name = "user_code", nullable = false, length = 20)
+    private String userCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "system_role", nullable = false, length = 20)
@@ -106,15 +106,11 @@ public class User extends BaseEntity {
 
     /** Account created by an Admin: no password until the user activates it (UC-AUTH-07). */
     public static User createPending(
-            String email,
-            String fullName,
-            @Nullable String studentCode,
-            SystemRole systemRole,
-            @Nullable UUID createdBy) {
+            String email, String fullName, String userCode, SystemRole systemRole, @Nullable UUID createdBy) {
         User user = new User();
         user.email = email;
         user.fullName = fullName;
-        user.studentCode = studentCode;
+        user.userCode = userCode;
         user.systemRole = systemRole;
         user.status = UserStatus.PENDING_ACTIVATION;
         user.createdBy = createdBy;
@@ -122,8 +118,9 @@ public class User extends BaseEntity {
     }
 
     /** First Admin created from environment variables, active immediately (FR-AUTH-24). */
-    public static User createBootstrapAdmin(String email, String fullName, String passwordHash, Instant now) {
-        User user = createPending(email, fullName, null, SystemRole.ADMIN, null);
+    public static User createBootstrapAdmin(
+            String email, String userCode, String fullName, String passwordHash, Instant now) {
+        User user = createPending(email, fullName, userCode, SystemRole.ADMIN, null);
         user.activate(passwordHash, now);
         return user;
     }

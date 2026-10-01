@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * so they stay out of access logs.
  *
  * @author MinhTien
- * @version 1.0.0
+ * @version 1.0.1
  * @since 2026-09-26
  * @modified 2026-09-26
  */
@@ -56,6 +56,7 @@ public class PasswordController {
     @PostMapping(ApiPaths.Auth.PASSWORD_RESET_VALIDATE)
     @SecurityRequirements
     @Operation(operationId = "validateResetToken", summary = "Check a password reset link (API-AUTH-07)")
+    @ApiResponse(responseCode = "200", description = "The link can be used")
     @ApiResponse(responseCode = "400", description = "AUTH_TOKEN_INVALID with reason NOT_FOUND, EXPIRED or USED")
     public ResetTokenInfoResponse validateResetToken(@Valid @RequestBody TokenRequest request) {
         return passwordService.validateResetToken(request);

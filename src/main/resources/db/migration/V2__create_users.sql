@@ -18,10 +18,10 @@ CREATE TABLE users (
     ,   password_changed_at  timestamptz
     ,   last_login_at        timestamptz
     ,   avatar_url           varchar(500)
-    ,   created_by           uuid,
+    ,   created_by           uuid
     ,   created_at           timestamptz  NOT NULL DEFAULT now()
     ,   updated_at           timestamptz  NOT NULL DEFAULT now()
-    ,   version              integer      NOT NULL DEFAULT 0
+    ,   version              integer      NOT NULL DEFAULT 0,
 
     -- Constraint --
     CONSTRAINT pk_users 

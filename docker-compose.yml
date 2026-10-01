@@ -59,13 +59,20 @@ services:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/asms
       SPRING_DATA_REDIS_HOST: redis
-      SPRING_MAIL_HOST: mailpit
-      SPRING_MAIL_PORT: 1025
+      # Mailpit unless MAIL_* are set in .env (e.g. Gmail SMTP with an App Password)
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      APP_MAIL_FROM: ${APP_MAIL_FROM:-randy2032005@gmail.com}
       APP_JWT_SECRET: ${APP_JWT_SECRET:-local-dev-secret-change-me-at-least-32-chars}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:5173}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
       APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-false}
       APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-}
+      APP_BOOTSTRAP_ADMIN_USER_CODE: ${APP_BOOTSTRAP_ADMIN_USER_CODE:-admin}
       APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-}
 
 volumes:

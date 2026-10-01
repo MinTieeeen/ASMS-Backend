@@ -16,6 +16,7 @@ import com.asms.entity.user.User;
 import com.asms.repository.user.UserRepository;
 import com.asms.service.auth.AuthMailService;
 import com.asms.service.auth.UserTokenService;
+import com.asms.support.TestUserCodes;
 import com.jayway.jsonpath.JsonPath;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,8 +68,8 @@ class PasswordFlowIT {
     @BeforeEach
     void createUser() {
         email = "user" + System.nanoTime() + "@gmail.com";
-        userRepository.save(
-                User.createBootstrapAdmin(email, "Nguyen Van A", passwordEncoder.encode(PASSWORD), Instant.now()));
+        userRepository.save(User.createBootstrapAdmin(
+                email, TestUserCodes.codeFor(email), "Nguyen Van A", passwordEncoder.encode(PASSWORD), Instant.now()));
     }
 
     @Test
@@ -125,7 +126,8 @@ class PasswordFlowIT {
     @DisplayName("UC-AUTH-05: activate a pending account, then the link reports the account as active")
     void activationFlow_shouldActivateAccount() throws Exception {
         String pendingEmail = "pending" + System.nanoTime() + "@gmail.com";
-        User pending = userRepository.save(User.createPending(pendingEmail, "Tran Thi B", null, SystemRole.USER, null));
+        User pending = userRepository.save(User.createPending(
+                pendingEmail, "Tran Thi B", TestUserCodes.codeFor(pendingEmail), SystemRole.USER, null));
         String token = userTokenService
                 .issue(pending, UserTokenType.ACTIVATION, null, null)
                 .rawToken();
@@ -196,7 +198,9 @@ class PasswordFlowIT {
     }
 
     private ResultActions login(String loginEmail, String password) throws Exception {
-        return postJson("/api/v1/auth/login", "{\"email\":\"%s\",\"password\":\"%s\"}".formatted(loginEmail, password));
+        return postJson(
+                "/api/v1/auth/login",
+                "{\"userCode\":\"%s\",\"password\":\"%s\"}".formatted(TestUserCodes.codeFor(loginEmail), password));
     }
 
     // A distinct client IP per call keeps the per-IP limits (BR-AUTH-09, BR-AUTH-10) out of the way

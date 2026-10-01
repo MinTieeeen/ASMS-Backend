@@ -17,6 +17,7 @@ import com.asms.entity.user.SystemRole;
 import com.asms.entity.user.User;
 import com.asms.exception.BusinessException;
 import com.asms.exception.ErrorCode;
+import com.asms.support.TestUserCodes;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -49,7 +50,12 @@ class ActivationServiceTest {
                 passwordEncoder,
                 events,
                 Clock.fixed(NOW, ZoneOffset.UTC));
-        user = User.createPending("a@gmail.com", "Nguyen Van A", null, SystemRole.USER, UUID.randomUUID());
+        user = User.createPending(
+                "a@gmail.com",
+                "Nguyen Van A",
+                TestUserCodes.codeFor("a@gmail.com"),
+                SystemRole.USER,
+                UUID.randomUUID());
         user.setId(UUID.randomUUID());
         token = UserToken.issue(
                 user, UserTokenType.ACTIVATION, "h".repeat(64), NOW.minusSeconds(60), Duration.ofHours(72), null, null);
@@ -62,6 +68,7 @@ class ActivationServiceTest {
         ActivationTokenInfoResponse info = activationService.validateActivationToken(new TokenRequest("raw"));
 
         assertThat(info.email()).isEqualTo("a@gmail.com");
+        assertThat(info.userCode()).isEqualTo(TestUserCodes.codeFor("a@gmail.com"));
         assertThat(info.fullName()).isEqualTo("Nguyen Van A");
     }
 

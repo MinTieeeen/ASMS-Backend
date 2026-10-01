@@ -7,7 +7,7 @@ CREATE TABLE refresh_tokens (
     ,   expires_at     timestamptz NOT NULL
     ,   used_at        timestamptz
     ,   replaced_by_id uuid
-    ,   created_at     timestamptz NOT NULL DEFAULT now()
+    ,   created_at     timestamptz NOT NULL DEFAULT now(),
 
     CONSTRAINT pk_refresh_tokens 
         PRIMARY KEY (id),

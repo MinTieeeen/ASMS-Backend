@@ -29,6 +29,9 @@ spring:
     problemdetails:
       enabled: true
   data:
+    web:
+      pageable:
+        max-page-size: 100 # API conventions: enforce a maximum page size
     redis:
       # Short timeouts: when Redis is down, auth keeps working without blocklist and rate limits (NFR-AUTH-10)
       timeout: 1s
@@ -98,6 +101,7 @@ app:
     reset-token-ttl: 30m # BR-AUTH-11
     refresh-race-window: 5s # Section 7.3
     cleanup-grace-period: 7d # NFR-AUTH-09
+    cleanup-cron: "0 17 3 * * *" # AuthCleanupJob, daily at 03:17 (default-timezone)
     event-retention: 180d # NFR-AUTH-14
     cookie:
       name: rt
@@ -105,8 +109,9 @@ app:
       domain: ${APP_AUTH_COOKIE_DOMAIN:}
       secure: ${APP_AUTH_COOKIE_SECURE:true} # NFR-AUTH-05
   mail:
-    from: ${APP_MAIL_FROM:ASMS <no-reply@asms.local>}
+    from: ${APP_MAIL_FROM:randy2032005@gmail.com}
   bootstrap-admin: # FR-AUTH-24
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
+    user-code: ${APP_BOOTSTRAP_ADMIN_USER_CODE:admin}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
     full-name: ${APP_BOOTSTRAP_ADMIN_FULL_NAME:Quản trị viên}

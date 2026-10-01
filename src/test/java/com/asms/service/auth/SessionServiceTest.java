@@ -27,6 +27,7 @@ import com.asms.repository.auth.UserSessionRepository;
 import com.asms.security.JwtTokenService;
 import com.asms.security.RevokedSessionStore;
 import com.asms.support.TestProperties;
+import com.asms.support.TestUserCodes;
 import com.asms.util.TokenHasher;
 import java.time.Clock;
 import java.time.Duration;
@@ -70,7 +71,12 @@ class SessionServiceTest {
                 new SessionMapperImpl(),
                 TestProperties.appProperties(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
-        user = User.createBootstrapAdmin("a@gmail.com", "Nguyen Van A", "hash", NOW.minus(Duration.ofDays(2)));
+        user = User.createBootstrapAdmin(
+                "a@gmail.com",
+                TestUserCodes.codeFor("a@gmail.com"),
+                "Nguyen Van A",
+                "hash",
+                NOW.minus(Duration.ofDays(2)));
         user.setId(UUID.randomUUID());
         when(jwtTokenService.issue(any(), any(), anyString()))
                 .thenReturn(new JwtTokenService.AccessToken("access", 900));

@@ -58,6 +58,7 @@ public record AppProperties(
             @NotNull Duration resetTokenTtl,
             @NotNull Duration refreshRaceWindow,
             @NotNull Duration cleanupGracePeriod,
+            @NotBlank String cleanupCron,
             @NotNull Duration eventRetention,
             @Valid @NotNull Cookie cookie) {}
 
@@ -75,9 +76,13 @@ public record AppProperties(
         }
     }
 
-    /** First Admin account created on startup when no Admin exists (FR-AUTH-24). */
+    /**
+     * First Admin account created on startup when no Admin exists (FR-AUTH-24). {@code userCode} is the code the
+     * Admin signs in with.
+     */
     public record BootstrapAdmin(
             @Nullable String email,
+            @NotBlank String userCode,
             @Nullable String password,
             @NotBlank String fullName) {
 

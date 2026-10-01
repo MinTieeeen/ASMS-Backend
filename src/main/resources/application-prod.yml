@@ -12,6 +12,9 @@ spring:
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: ${MAIL_AUTH:true}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:true}
 
 server:
   # Behind the reverse proxy: take the client IP from trusted X-Forwarded-For only (rate limits, session IPs)

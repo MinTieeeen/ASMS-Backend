@@ -26,6 +26,7 @@ import com.asms.exception.ErrorCode;
 import com.asms.repository.user.UserRepository;
 import com.asms.security.RateLimitService;
 import com.asms.support.TestProperties;
+import com.asms.support.TestUserCodes;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -70,7 +71,8 @@ class PasswordServiceTest {
                 events,
                 TestProperties.appProperties(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
-        user = User.createBootstrapAdmin(EMAIL, "Nguyen Van A", "current-hash", NOW.minus(Duration.ofDays(1)));
+        user = User.createBootstrapAdmin(
+                EMAIL, TestUserCodes.codeFor(EMAIL), "Nguyen Van A", "current-hash", NOW.minus(Duration.ofDays(1)));
         user.setId(UUID.randomUUID());
         when(passwordEncoder.matches(CURRENT, "current-hash")).thenReturn(true);
         when(passwordEncoder.encode(NEW)).thenReturn("new-hash");
@@ -93,7 +95,7 @@ class PasswordServiceTest {
     @Test
     @DisplayName("FR-AUTH-13: a pending account gets a new activation link instead")
     void requestPasswordReset_shouldSendActivation_whenAccountPending() {
-        User pending = User.createPending(EMAIL, "Nguyen Van A", null, SystemRole.USER, null);
+        User pending = User.createPending(EMAIL, "Nguyen Van A", TestUserCodes.codeFor(EMAIL), SystemRole.USER, null);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(pending));
         when(userTokenService.issue(pending, UserTokenType.ACTIVATION, null, "10.0.0.1"))
                 .thenReturn(new UserTokenService.IssuedToken("raw", NOW.plusSeconds(3600)));

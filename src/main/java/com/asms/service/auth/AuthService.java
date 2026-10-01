@@ -16,9 +16,9 @@ import com.asms.mapper.user.UserMapper;
 import com.asms.repository.user.UserRepository;
 import com.asms.security.RateLimitPolicy;
 import com.asms.security.RateLimitService;
-import com.asms.util.EmailNormalizer;
 import com.asms.util.RandomCodeGenerator;
 import com.asms.util.TokenHasher;
+import com.asms.util.UserCodeNormalizer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -45,6 +45,7 @@ public class AuthService {
 
     private static final String METADATA_REASON = "reason";
     private static final String METADATA_ATTEMPT = "attempt";
+    private static final String METADATA_USER_CODE = "userCode";
 
     private final UserRepository userRepository;
     private final SessionService sessionService;
@@ -55,7 +56,7 @@ public class AuthService {
     private final AppProperties props;
     private final Clock clock;
 
-    /** Hash checked when the email is unknown, so that response time does not reveal it (NFR-AUTH-06). */
+    /** Hash checked when the user ID is unknown, so that response time does not reveal it (NFR-AUTH-06). */
     private final String dummyPasswordHash;
 
     public AuthService(
@@ -79,26 +80,25 @@ public class AuthService {
     }
 
     /**
-     * Authenticates with email and password and opens a session (UC-AUTH-01).
+     * Authenticates with user ID (MSSV for students) and password and opens a session (UC-AUTH-01).
      *
      * @throws BusinessException {@code AUTH_RATE_LIMITED}, {@code AUTH_INVALID_CREDENTIALS},
      *     {@code AUTH_ACCOUNT_TEMP_LOCKED} or {@code AUTH_ACCOUNT_LOCKED}
      */
     @Transactional(noRollbackFor = BusinessException.class)
     public IssuedSession login(LoginRequest request, ClientInfo client) {
-        String email = EmailNormalizer.normalize(request.email());
+        String userCode = UserCodeNormalizer.normalize(request.userCode());
         AuthEventOccurred failure =
-                AuthEventOccurred.of(AuthEventType.LOGIN_FAILED, client).withEmail(email);
-        checkLoginRateLimits(email, failure);
+                AuthEventOccurred.of(AuthEventType.LOGIN_FAILED, client).withMetadata(METADATA_USER_CODE, userCode);
+        checkLoginRateLimits(userCode, failure);
 
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findByUserCode(userCode).orElse(null);
         if (user == null) {
-            // Same Argon2 cost as a real check: FR-AUTH-02, NFR-AUTH-06
             passwordEncoder.matches(request.password(), dummyPasswordHash);
             events.publish(failure.withMetadata(METADATA_REASON, LoginFailedReason.USER_NOT_FOUND));
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
-        failure = failure.withUser(user.getId());
+        failure = failure.withUser(user.getId()).withEmail(user.getEmail());
 
         Instant now = Instant.now(clock);
         if (user.isTemporarilyLocked(now)) {
@@ -117,7 +117,7 @@ public class AuthService {
         IssuedSession issued = sessionService.openSession(user, request.isRememberMe(), client);
         events.publish(AuthEventOccurred.of(AuthEventType.LOGIN_SUCCESS, client)
                 .withUser(user.getId())
-                .withEmail(email));
+                .withEmail(user.getEmail()));
         return issued;
     }
 
@@ -130,10 +130,10 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private void checkLoginRateLimits(String email, AuthEventOccurred failure) {
+    private void checkLoginRateLimits(String userCode, AuthEventOccurred failure) {
         try {
             rateLimitService.check(RateLimitPolicy.LOGIN_IP, failure.ipAddress());
-            rateLimitService.check(RateLimitPolicy.LOGIN_EMAIL, TokenHasher.sha256Hex(email));
+            rateLimitService.check(RateLimitPolicy.LOGIN_USER_CODE, TokenHasher.sha256Hex(userCode));
         } catch (BusinessException e) {
             events.publish(failure.withMetadata(METADATA_REASON, LoginFailedReason.RATE_LIMITED));
             throw e;

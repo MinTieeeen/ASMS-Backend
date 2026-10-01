@@ -47,6 +47,7 @@ class AuthServiceTest {
     private static final Instant NOW = Instant.parse("2026-09-26T01:00:00Z");
     private static final ClientInfo CLIENT = new ClientInfo("10.0.0.1", "UA");
     private static final String EMAIL = "a@gmail.com";
+    private static final String USER_CODE = "SE170001";
     private static final String PASSWORD = "Secret123";
 
     private final UserRepository userRepository = mock(UserRepository.class);
@@ -72,23 +73,23 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("FR-AUTH-01: email is trimmed and lowercased before lookup")
-    void login_shouldNormalizeEmail() {
+    @DisplayName("FR-AUTH-01: the user ID is trimmed and uppercased before lookup")
+    void login_shouldNormalizeUserCode() {
         User user = activeUser();
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
         when(sessionService.openSession(user, true, CLIENT)).thenReturn(issued());
 
-        authService.login(new LoginRequest("  A@Gmail.COM ", PASSWORD, true), CLIENT);
+        authService.login(new LoginRequest("  se170001 ", PASSWORD, true), CLIENT);
 
-        verify(userRepository).findByEmail(EMAIL);
+        verify(userRepository).findByUserCode(USER_CODE);
     }
 
     @Test
     void login_shouldOpenSessionAndResetCounter_whenCredentialsValid() {
         User user = activeUser();
         user.recordFailedLogin(NOW.minusSeconds(10));
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
         when(sessionService.openSession(user, false, CLIENT)).thenReturn(issued());
 
@@ -101,9 +102,9 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("NFR-AUTH-06: unknown email still runs a password hash and returns the generic error")
-    void login_shouldHashDummyPassword_whenEmailUnknown() {
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    @DisplayName("NFR-AUTH-06: unknown user ID still runs a password hash and returns the generic error")
+    void login_shouldHashDummyPassword_whenUserCodeUnknown() {
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
@@ -115,7 +116,7 @@ class AuthServiceTest {
     @Test
     void login_shouldCountFailure_whenPasswordWrong() {
         User user = activeUser();
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
@@ -131,7 +132,7 @@ class AuthServiceTest {
         for (int i = 0; i < 4; i++) {
             user.recordFailedLogin(NOW.minusSeconds(60));
         }
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .isInstanceOfSatisfying(BusinessException.class, e -> {
@@ -146,7 +147,7 @@ class AuthServiceTest {
     void login_shouldRejectWithoutPasswordCheck_whenTemporarilyLocked() {
         User user = activeUser();
         user.lockTemporarily(NOW.plusSeconds(120));
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .isInstanceOfSatisfying(BusinessException.class, e -> {
@@ -159,9 +160,9 @@ class AuthServiceTest {
     @Test
     @DisplayName("BR-AUTH-03: a pending account has no password and always fails")
     void login_shouldFail_whenAccountPendingActivation() {
-        User user = User.createPending(EMAIL, "Nguyen Van A", null, SystemRole.USER, null);
+        User user = User.createPending(EMAIL, "Nguyen Van A", USER_CODE, SystemRole.USER, null);
         user.setId(UUID.randomUUID());
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
@@ -174,7 +175,7 @@ class AuthServiceTest {
     void login_shouldRejectLockedAccount_afterPasswordCheck() {
         User user = activeUser();
         ReflectionTestUtils.setField(user, "status", UserStatus.LOCKED);
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
@@ -193,16 +194,16 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.AUTH_RATE_LIMITED);
-        verify(userRepository, never()).findByEmail(anyString());
+        verify(userRepository, never()).findByUserCode(anyString());
         assertThat(publishedEvent().metadata()).containsEntry("reason", LoginFailedReason.RATE_LIMITED);
     }
 
     private static LoginRequest login() {
-        return new LoginRequest(EMAIL, PASSWORD, false);
+        return new LoginRequest(USER_CODE, PASSWORD, false);
     }
 
     private static User activeUser() {
-        User user = User.createBootstrapAdmin(EMAIL, "Nguyen Van A", "hash", NOW.minus(Duration.ofDays(1)));
+        User user = User.createBootstrapAdmin(EMAIL, USER_CODE, "Nguyen Van A", "hash", NOW.minus(Duration.ofDays(1)));
         user.setId(UUID.randomUUID());
         return user;
     }

@@ -13,6 +13,7 @@ import com.asms.entity.auth.UserTokenType;
 import com.asms.entity.user.SystemRole;
 import com.asms.entity.user.User;
 import com.asms.repository.user.UserRepository;
+import com.asms.support.TestUserCodes;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.Duration;
@@ -61,7 +62,7 @@ class AuthRepositoriesIT {
                 User.createPending("a@gmail.com", "Nguyen Van A", "21120001", SystemRole.USER, null));
 
         assertThat(userRepository.findByEmail("a@gmail.com")).isPresent();
-        assertThat(userRepository.existsByStudentCode("21120001")).isTrue();
+        assertThat(userRepository.existsByUserCode("21120001")).isTrue();
         assertThat(userRepository.existsBySystemRole(SystemRole.ADMIN)).isFalse();
     }
 
@@ -152,7 +153,8 @@ class AuthRepositoriesIT {
     }
 
     private User savedActiveUser(String email) {
-        return userRepository.save(User.createBootstrapAdmin(email, "Test User", "hash", Instant.now(clock)));
+        return userRepository.save(User.createBootstrapAdmin(
+                email, TestUserCodes.codeFor(email), "Test User", "hash", Instant.now(clock)));
     }
 
     private UserSession saveSession(User user, Instant lastUsedAt) {

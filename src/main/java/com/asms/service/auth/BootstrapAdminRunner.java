@@ -5,6 +5,7 @@ import com.asms.entity.user.SystemRole;
 import com.asms.entity.user.User;
 import com.asms.repository.user.UserRepository;
 import com.asms.util.EmailNormalizer;
+import com.asms.util.UserCodeNormalizer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -17,7 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Creates the first Admin from {@code APP_BOOTSTRAP_ADMIN_EMAIL} and {@code APP_BOOTSTRAP_ADMIN_PASSWORD} when no Admin
+ * Creates the first Admin from {@code APP_BOOTSTRAP_ADMIN_EMAIL}, {@code APP_BOOTSTRAP_ADMIN_USER_CODE} (sign-in code,
+ * {@code admin} by default) and {@code APP_BOOTSTRAP_ADMIN_PASSWORD} when no Admin
  * exists yet (FR-AUTH-24, FA-13). The account is active immediately.
  *
  * <p>Does nothing when an Admin already exists or the variables are not set. An invalid configuration is logged and
@@ -54,12 +56,20 @@ public class BootstrapAdminRunner implements ApplicationRunner {
             log.warn("No Admin account exists and APP_BOOTSTRAP_ADMIN_EMAIL/PASSWORD are not set");
             return;
         }
-        createAdmin(EmailNormalizer.normalize(config.email()), config.password(), config.fullName());
+        createAdmin(
+                EmailNormalizer.normalize(config.email()),
+                UserCodeNormalizer.normalize(config.userCode()),
+                config.password(),
+                config.fullName());
     }
 
-    private void createAdmin(String email, String password, String fullName) {
+    private void createAdmin(String email, String userCode, String password, String fullName) {
         if (userRepository.existsByEmail(email)) {
             log.error("Bootstrap Admin not created: email {} already belongs to a non-Admin account", email);
+            return;
+        }
+        if (userRepository.existsByUserCode(userCode)) {
+            log.error("Bootstrap Admin not created: code {} already belongs to a non-Admin account", userCode);
             return;
         }
         List<PasswordViolation> violations = passwordPolicy.findViolations(password, email);
@@ -67,8 +77,11 @@ public class BootstrapAdminRunner implements ApplicationRunner {
             log.error("Bootstrap Admin not created: password violates the policy {}", violations);
             return;
         }
-        userRepository.save(
-                User.createBootstrapAdmin(email, fullName, passwordEncoder.encode(password), Instant.now(clock)));
-        log.info("Bootstrap Admin {} created; remove APP_BOOTSTRAP_ADMIN_PASSWORD from the environment", email);
+        userRepository.save(User.createBootstrapAdmin(
+                email, userCode, fullName, passwordEncoder.encode(password), Instant.now(clock)));
+        log.info(
+                "Bootstrap Admin {} ({}) created; remove APP_BOOTSTRAP_ADMIN_PASSWORD from the environment",
+                userCode,
+                email);
     }
 }

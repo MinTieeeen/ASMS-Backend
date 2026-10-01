@@ -38,6 +38,7 @@ class BootstrapAdminRunnerTest {
         ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(saved.capture());
         assertThat(saved.getValue().getEmail()).isEqualTo("admin@asms.local");
+        assertThat(saved.getValue().getUserCode()).isEqualTo("ADMIN");
         assertThat(saved.getValue().getSystemRole()).isEqualTo(SystemRole.ADMIN);
         assertThat(saved.getValue().isActive()).isTrue();
     }
@@ -73,7 +74,7 @@ class BootstrapAdminRunnerTest {
                 defaults.jwt(),
                 defaults.cors(),
                 defaults.auth(),
-                new AppProperties.BootstrapAdmin(email, password, "Quản trị viên"),
+                new AppProperties.BootstrapAdmin(email, "admin", password, "Quản trị viên"),
                 defaults.mail());
         return new BootstrapAdminRunner(
                 userRepository,

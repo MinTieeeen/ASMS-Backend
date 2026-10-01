@@ -6,10 +6,10 @@ CREATE TABLE auth_events (
     ,   user_id        uuid
     ,   actor_id       uuid
     ,   email          varchar(255)
-    ,   session_id     uuid,
-    ,   ip_address     varchar(45),
-    ,   user_agent     varchar(512),
-    ,   metadata       jsonb            NOT NULL DEFAULT '{}'::jsonb,
+    ,   session_id     uuid
+    ,   ip_address     varchar(45)
+    ,   user_agent     varchar(512)
+    ,   metadata       jsonb            NOT NULL DEFAULT '{}'::jsonb
     ,   created_at     timestamptz      NOT NULL DEFAULT now(),
 
     CONSTRAINT pk_auth_events 

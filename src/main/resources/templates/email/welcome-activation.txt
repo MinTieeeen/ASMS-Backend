@@ -1,6 +1,7 @@
 [# th:utext="#{email.common.greeting(${fullName})}" /]
 
 [# th:utext="#{email.welcomeActivation.intro}" /]
+[# th:utext="#{email.welcomeActivation.loginId(${userCode})}" /]
 
 [(${link})]
 
