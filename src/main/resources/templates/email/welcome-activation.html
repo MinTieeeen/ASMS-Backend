@@ -1,0 +1,22 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{layout.html :: page(#{email.welcomeActivation.title}, ~{::content})}"
+>
+  <body>
+    <th:block th:fragment="content">
+      <p
+        th:replace="~{layout.html :: paragraph(#{email.welcomeActivation.intro})}"
+      ></p>
+      <p
+        th:replace="~{layout.html :: paragraph(#{email.welcomeActivation.loginId(${userCode})})}"
+      ></p>
+      <th:block
+        th:replace="~{layout.html :: action(${link}, #{email.welcomeActivation.action})}"
+      ></th:block>
+      <p
+        th:replace="~{layout.html :: note(#{email.welcomeActivation.expiry(${expiresAt})})}"
+      ></p>
+    </th:block>
+  </body>
+</html>

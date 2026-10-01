@@ -8,7 +8,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Real PostgreSQL and Redis for integration tests (requirement section 9.6). Image versions match docker-compose.yml.
+ * Real PostgreSQL and Redis for integration tests (requirement section 9.6). Image versions match asms-backend/docker-compose.yml.
  *
  * @author MinhTien
  * @version 1.0.0
