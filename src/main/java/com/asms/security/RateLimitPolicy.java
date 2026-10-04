@@ -26,6 +26,7 @@ public enum RateLimitPolicy {
     AVATAR_UPLOAD_USER("rl:avatar-upload:user:", 10, Duration.ofHours(1)),
     ADMIN_WRITE("rl:admin-write:user:", 120, Duration.ofMinutes(1)),
     GITHUB_AUTHORIZE_USER("rl:github-authorize:user:", 10, Duration.ofHours(1)),
+    GITHUB_CALLBACK_USER("rl:github-callback:user:", 10, Duration.ofHours(1)),
     GITHUB_REFRESH_USER("rl:github-refresh:user:", 1, Duration.ofMinutes(1));
 
     private final String keyPrefix;

@@ -34,7 +34,26 @@ public record AppProperties(
         @Valid @NotNull Auth auth,
         @Valid @NotNull BootstrapAdmin bootstrapAdmin,
         @Valid @NotNull Mail mail,
-        @Valid @NotNull Storage storage) {
+        @Valid @NotNull Storage storage,
+        @Valid @NotNull Github github) {
+
+    /**
+     * GitHub OAuth App used to connect a GitHub account to a profile (FR-USER-27, BR-USER-22). Optional: without a
+     * client id the connect button answers {@code GITHUB_UNAVAILABLE}.
+     *
+     * @param callbackPath frontend page GitHub sends the user back to; must match the OAuth App callback URL
+     */
+    public record Github(
+            @Nullable String clientId,
+            @Nullable String clientSecret,
+            @NotBlank String callbackPath,
+            @NotBlank String oauthBaseUrl,
+            @NotBlank String apiBaseUrl) {
+
+        public boolean isConfigured() {
+            return StringUtils.hasText(clientId) && StringUtils.hasText(clientSecret);
+        }
+    }
 
     /**
      * S3-compatible object storage of avatars (Cloudflare R2 or AWS S3, section 8.3 of the Module 2 spec). Every value

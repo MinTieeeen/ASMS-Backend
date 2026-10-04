@@ -76,7 +76,8 @@ class BootstrapAdminRunnerTest {
                 defaults.auth(),
                 new AppProperties.BootstrapAdmin(email, "admin", password, "Quản trị viên"),
                 defaults.mail(),
-                defaults.storage());
+                defaults.storage(),
+                defaults.github());
         return new BootstrapAdminRunner(
                 userRepository,
                 new PasswordPolicyValidator(),

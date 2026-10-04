@@ -118,6 +118,12 @@ app:
     access-key: ${STORAGE_ACCESS_KEY:}
     secret-key: ${STORAGE_SECRET_KEY:}
     public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
+  github: # GitHub OAuth App (FR-USER-27); callback URL = frontend-url + callback-path
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
+    callback-path: /settings/profile/github/callback
+    oauth-base-url: https://github.com
+    api-base-url: https://api.github.com
   bootstrap-admin: # FR-AUTH-24
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
     user-code: ${APP_BOOTSTRAP_ADMIN_USER_CODE:admin}

@@ -26,6 +26,10 @@ public final class ApiPaths {
         public static final String ME_LANGUAGE = "/me/language";
         public static final String ME_PROFILE = "/me/profile";
         public static final String ME_AVATAR = "/me/avatar";
+        public static final String ME_GITHUB = "/me/github";
+        public static final String ME_GITHUB_AUTHORIZE = "/me/github/authorize";
+        public static final String ME_GITHUB_CALLBACK = "/me/github/callback";
+        public static final String ME_GITHUB_REFRESH = "/me/github/refresh";
         public static final String PROFILE = "/{userId}/profile";
 
         private Users() {}
