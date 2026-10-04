@@ -119,8 +119,12 @@ public class User extends BaseEntity {
     @Column(length = 300)
     private String bio;
 
-    /** Object key prefix of the avatar: files are {avatarKey}-256.webp and -64.webp; null = initials avatar */
+    /**
+     * Object key prefix of the avatar: files are {avatarKey}-256.webp and -64.webp; null = initials avatar. Changed by
+     * its own API, outside the profile form, so it does not bump {@code @Version} (no false conflict on the form).
+     */
     @Nullable
+    @OptimisticLock(excluded = true)
     @Column(name = "avatar_key", length = 255)
     private String avatarKey;
 

@@ -115,6 +115,8 @@ class AvatarFlowIT {
         verify(storage, never()).delete(any());
         authed(get("/api/v1/auth/me"))
                 .andExpect(jsonPath("$.avatarUrl").value("https://cdn.test/" + firstKey + "-256.webp"));
+        // A new photo does not make an open profile form outdated
+        authed(get("/api/v1/users/me/profile")).andExpect(jsonPath("$.version").value(0));
 
         upload(png(200, 200), 0, 0, 200).andExpect(status().isOk());
 
