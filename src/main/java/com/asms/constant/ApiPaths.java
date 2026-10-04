@@ -39,6 +39,8 @@ public final class ApiPaths {
     public static final class AdminUsers {
 
         public static final String ACTIVATION_EMAIL = "/{userId}/activation-email";
+        public static final String USER = "/{userId}";
+        public static final String AUTH_EVENTS = "/{userId}/auth-events";
 
         private AdminUsers() {}
     }

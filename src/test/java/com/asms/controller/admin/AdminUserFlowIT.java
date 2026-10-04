@@ -1,6 +1,9 @@
 package com.asms.controller.admin;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -16,7 +19,9 @@ import com.asms.repository.user.UserRepository;
 import com.asms.service.auth.AuthMailService;
 import com.asms.support.TestUserCodes;
 import com.jayway.jsonpath.JsonPath;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -152,7 +157,7 @@ class AdminUserFlowIT {
                 SystemRole.USER,
                 null));
 
-        asAdmin(get("/api/v1/admin/users").param("keyword", marker).param("status", "PENDING_ACTIVATION"), null)
+        asAdmin(get("/api/v1/admin/users").param("q", marker).param("status", "PENDING_ACTIVATION"), null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(1))
                 .andExpect(jsonPath("$.items[0].email").value(marker + "@gmail.com"));
@@ -162,6 +167,107 @@ class AdminUserFlowIT {
         asAdmin(get("/api/v1/admin/users").param("sort", "unknownField"), null)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+        asAdmin(get("/api/v1/admin/users").param("q", "z"), null)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("q"));
+    }
+
+    @Test
+    @DisplayName("FR-USER-11: the name matches without accents; email and user ID match by prefix")
+    void listUsers_shouldSearchWithoutAccents() throws Exception {
+        String marker = "Qx" + SEQUENCE.incrementAndGet();
+        String email = "acc" + System.nanoTime() + "@gmail.com";
+        userRepository.save(
+                User.createPending(email, "Đặng Thị " + marker, TestUserCodes.codeFor(email), SystemRole.USER, null));
+
+        asAdmin(get("/api/v1/admin/users").param("q", "dang thi " + marker.toLowerCase()), null)
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].fullName").value("Đặng Thị " + marker))
+                .andExpect(jsonPath("$.items[0].avatarThumbUrl").value(nullValue()));
+        asAdmin(get("/api/v1/admin/users").param("q", email.substring(0, 10)), null)
+                .andExpect(jsonPath("$.items[0].email").value(email));
+        asAdmin(
+                        get("/api/v1/admin/users")
+                                .param("q", TestUserCodes.codeFor(email).toLowerCase()),
+                        null)
+                .andExpect(jsonPath("$.items[0].email").value(email));
+        // A LIKE wildcard in the keyword is literal
+        asAdmin(get("/api/v1/admin/users").param("q", "%%"), null)
+                .andExpect(jsonPath("$.totalItems").value(0));
+    }
+
+    @Test
+    void listUsers_shouldSortAndPageFromOne() throws Exception {
+        asAdmin(
+                        get("/api/v1/admin/users")
+                                .param("sort", "fullName,asc")
+                                .param("page", "1")
+                                .param("size", "1"),
+                        null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.items.length()").value(1));
+        asAdmin(get("/api/v1/admin/users").param("size", "101"), null).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("UC-USER-05: detail shows who created the account, sessions and sign-in events with a cursor")
+    void getAdminUser_shouldShowAccountStateAndEvents() throws Exception {
+        String email = uniqueEmail("detail");
+        String created = asAdmin(post("/api/v1/admin/users"), createBody(email, null))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String userId = JsonPath.read(created, "$.id");
+        String token = capturedActivationToken();
+        mockMvc.perform(withIp(post("/api/v1/auth/activate"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\",\"password\":\"%s\"}".formatted(token, PASSWORD)))
+                .andExpect(status().isNoContent());
+        for (int i = 0; i < 3; i++) {
+            login(email).andExpect(status().isOk());
+        }
+
+        asAdmin(get("/api/v1/admin/users/" + userId), null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.createdBy.fullName").value("Quan Tri"))
+                .andExpect(jsonPath("$.activeSessionCount").value(3))
+                .andExpect(jsonPath("$.failedLoginCount").value(0))
+                .andExpect(jsonPath("$.lockedBy").value(nullValue()));
+
+        // Events are written asynchronously
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> asAdmin(
+                        get("/api/v1/admin/users/" + userId + "/auth-events").param("limit", "50"), null)
+                .andExpect(jsonPath("$.items.length()", greaterThanOrEqualTo(4))));
+        String firstPage = asAdmin(
+                        get("/api/v1/admin/users/" + userId + "/auth-events").param("limit", "2"), null)
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].eventType").value("LOGIN_SUCCESS"))
+                .andExpect(jsonPath("$.nextCursor").isNotEmpty())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String cursor = JsonPath.read(firstPage, "$.nextCursor");
+        long lastId = ((Number) JsonPath.read(firstPage, "$.items[1].id")).longValue();
+        String secondPage = asAdmin(
+                        get("/api/v1/admin/users/" + userId + "/auth-events")
+                                .param("cursor", cursor)
+                                .param("limit", "2"),
+                        null)
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(((Number) JsonPath.read(secondPage, "$.items[0].id")).longValue())
+                .isLessThan(lastId);
+
+        asAdmin(get("/api/v1/admin/users/" + userId + "/auth-events").param("cursor", "%%broken"), null)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("cursor"));
+        asAdmin(get("/api/v1/admin/users/" + UUID.randomUUID()), null)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
     }
 
     @Test

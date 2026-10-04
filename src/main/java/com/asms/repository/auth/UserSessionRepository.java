@@ -31,6 +31,15 @@ public interface UserSessionRepository extends JpaRepository<UserSession, UUID> 
             """)
     List<UserSession> findActiveByUserId(@Param("userId") UUID userId, @Param("now") Instant now);
 
+    @Query("""
+            select count(s) from UserSession s
+            where s.user.id = :userId
+              and s.revokedAt is null
+              and s.expiresAt > :now
+              and s.absoluteExpiresAt > :now
+            """)
+    long countActiveByUserId(@Param("userId") UUID userId, @Param("now") Instant now);
+
     // "User_Id" (not "UserId"): UserSession#getUserId() would otherwise be read as a non-existent attribute
     Optional<UserSession> findByIdAndUser_Id(UUID id, UUID userId);
 

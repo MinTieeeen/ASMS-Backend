@@ -213,6 +213,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- Waiting for asynchronous effects (auth events) in integration tests; version from the Boot BOM -->
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation-test</artifactId>
             <scope>test</scope>

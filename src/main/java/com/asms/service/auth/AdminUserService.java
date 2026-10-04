@@ -1,11 +1,9 @@
 package com.asms.service.auth;
 
 import com.asms.dto.admin.ActivationEmailResponse;
-import com.asms.dto.admin.AdminUserFilter;
 import com.asms.dto.admin.AdminUserResponse;
 import com.asms.dto.admin.CreateUserRequest;
 import com.asms.dto.common.ClientInfo;
-import com.asms.dto.common.PageResponse;
 import com.asms.entity.admin.AdminAuditAction;
 import com.asms.entity.auth.AuthEventType;
 import com.asms.entity.auth.UserTokenType;
@@ -18,7 +16,6 @@ import com.asms.exception.GlobalExceptionHandler.FieldError;
 import com.asms.exception.ProblemDetailFactory;
 import com.asms.mapper.user.UserMapper;
 import com.asms.repository.user.UserRepository;
-import com.asms.repository.user.UserSpecifications;
 import com.asms.security.RateLimitPolicy;
 import com.asms.security.RateLimitService;
 import com.asms.service.admin.AdminAuditService;
@@ -35,8 +32,6 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -144,14 +139,6 @@ public class AdminUserService {
                 .withActor(adminId)
                 .withEmail(user.getEmail()));
         return new ActivationEmailResponse(token.expiresAt());
-    }
-
-    /** Users matching the filter, newest first by default (SCR-AUTH-06). */
-    @Transactional(readOnly = true)
-    public PageResponse<AdminUserResponse> listUsers(AdminUserFilter filter, Pageable pageable) {
-        Specification<User> spec = Specification.allOf(
-                UserSpecifications.hasStatus(filter.status()), UserSpecifications.matchesKeyword(filter.keyword()));
-        return PageResponse.from(userRepository.findAll(spec, pageable), userMapper::toAdminResponse);
     }
 
     /** Saves and flushes so that a concurrent duplicate is reported as a business error, not a 500. */
