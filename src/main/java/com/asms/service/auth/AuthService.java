@@ -92,7 +92,7 @@ public class AuthService {
                 AuthEventOccurred.of(AuthEventType.LOGIN_FAILED, client).withMetadata(METADATA_USER_CODE, userCode);
         checkLoginRateLimits(userCode, failure);
 
-        User user = userRepository.findByUserCode(userCode).orElse(null);
+        User user = userRepository.findByUserCodeForUpdate(userCode).orElse(null);
         if (user == null) {
             passwordEncoder.matches(request.password(), dummyPasswordHash);
             events.publish(failure.withMetadata(METADATA_REASON, LoginFailedReason.USER_NOT_FOUND));

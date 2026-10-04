@@ -154,11 +154,11 @@ class AdminUserFlowIT {
 
         asAdmin(get("/api/v1/admin/users").param("keyword", marker).param("status", "PENDING_ACTIVATION"), null)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalItems").value(1))
                 .andExpect(jsonPath("$.items[0].email").value(marker + "@gmail.com"));
         asAdmin(get("/api/v1/admin/users").param("size", "5"), null)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements", greaterThanOrEqualTo(2)));
+                .andExpect(jsonPath("$.totalItems", greaterThanOrEqualTo(2)));
         asAdmin(get("/api/v1/admin/users").param("sort", "unknownField"), null)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));

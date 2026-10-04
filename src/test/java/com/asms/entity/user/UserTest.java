@@ -1,10 +1,12 @@
 package com.asms.entity.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.asms.support.TestUserCodes;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -97,6 +99,55 @@ class UserTest {
         assertThat(user.getPasswordChangedAt()).isEqualTo(NOW);
         assertThat(user.isTemporarilyLocked(NOW)).isFalse();
         assertThat(user.getFailedLoginCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("BR-USER-01: the search column follows the full name, without accents")
+    void changeFullName_shouldUpdateSearchColumn() {
+        User user = activeUser();
+
+        user.changeFullName("Đặng Thị Ánh");
+
+        assertThat(user.getFullNameSearch()).isEqualTo("dang thi anh");
+    }
+
+    @Test
+    @DisplayName("BR-USER-11, BR-USER-12: unlock returns an activated account to ACTIVE and clears every lock")
+    void lockThenUnlock_shouldRestoreActiveAccount() {
+        User user = activeUser();
+        user.recordFailedLogin(NOW);
+        UUID adminId = UUID.randomUUID();
+
+        user.lock("Chia sẻ tài khoản cho người khác.", adminId, NOW);
+        assertThat(user.isLocked()).isTrue();
+        assertThat(user.getLockedBy()).isEqualTo(adminId);
+
+        user.unlock();
+        assertThat(user.isActive()).isTrue();
+        assertThat(user.getLockedAt()).isNull();
+        assertThat(user.getLockedReason()).isNull();
+        assertThat(user.getLockedBy()).isNull();
+        assertThat(user.getFailedLoginCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("BR-USER-12: a locked account that never had a password goes back to PENDING_ACTIVATION")
+    void unlock_shouldReturnToPending_whenNoPassword() {
+        User user = User.createPending(
+                "p@gmail.com", "Pending User", TestUserCodes.codeFor("p@gmail.com"), SystemRole.USER, null);
+        user.lock("Tài khoản tạo nhầm, khóa lại.", UUID.randomUUID(), NOW);
+
+        user.unlock();
+
+        assertThat(user.isPendingActivation()).isTrue();
+    }
+
+    @Test
+    @DisplayName("BR-USER-08: the email changes only while the account is pending activation")
+    void changeEmail_shouldRejectActiveAccount() {
+        User user = activeUser();
+
+        assertThatThrownBy(() -> user.changeEmail("new@gmail.com")).isInstanceOf(IllegalStateException.class);
     }
 
     private static User activeUser() {

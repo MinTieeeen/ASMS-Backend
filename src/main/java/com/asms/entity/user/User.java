@@ -1,10 +1,15 @@
 package com.asms.entity.user;
 
 import com.asms.entity.base.BaseEntity;
+import com.asms.entity.catalog.School;
+import com.asms.util.SearchNormalizer;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
@@ -12,18 +17,22 @@ import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OptimisticLock;
 import org.jspecify.annotations.Nullable;
 
 /**
- * User account. The Auth module owns the authentication columns; profile columns are added by other modules later.
+ * User account. The Auth module owns the authentication columns; Module 2 adds the profile (school, bio, avatar), the
+ * accent-free search column and who locked the account.
  *
- * <p>State changes go through domain methods so that account invariants (BR-AUTH-03, BR-AUTH-04) stay in one place.
- * {@code @Version} protects the failed-login counter against concurrent updates.
+ * <p>State changes go through domain methods so that account invariants (BR-AUTH-03, BR-AUTH-04, BR-USER-11,
+ * BR-USER-12) stay in one place. {@code @Version} protects profile and account changes against concurrent updates
+ * (BR-USER-14). Login bookkeeping (failed-login counter, temporary lock, last login) is excluded from it, otherwise
+ * every login on another device would turn an open profile form into a false conflict; the login locks the row instead.
  *
  * @author MinhTien
- * @version 1.1.0
+ * @version 2.0.0
  * @since 2026-09-26
- * @modified 2026-09-26
+ * @modified 2026-10-04
  */
 @Getter
 @Entity
@@ -41,6 +50,10 @@ public class User extends BaseEntity {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
+    /** {@link #fullName} without accents, lowercase; written with it, used by the Admin search (BR-USER-17) */
+    @Column(name = "full_name_search", nullable = false, length = 100)
+    private String fullNameSearch;
+
     /** User ID, the sign-in identifier: the MSSV of a student, a code such as ADMIN for an Admin; stored uppercase */
     @Column(name = "user_code", nullable = false, length = 20)
     private String userCode;
@@ -53,14 +66,17 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 30)
     private UserStatus status;
 
+    @OptimisticLock(excluded = true)
     @Column(name = "failed_login_count", nullable = false)
     private short failedLoginCount;
 
     @Nullable
+    @OptimisticLock(excluded = true)
     @Column(name = "last_failed_login_at")
     private Instant lastFailedLoginAt;
 
     @Nullable
+    @OptimisticLock(excluded = true)
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
@@ -71,6 +87,11 @@ public class User extends BaseEntity {
     @Nullable
     @Column(name = "locked_reason", length = 500)
     private String lockedReason;
+
+    /** Admin who locked the account */
+    @Nullable
+    @Column(name = "locked_by")
+    private UUID lockedBy;
 
     @Nullable
     @Column(name = "activated_at")
@@ -85,12 +106,23 @@ public class User extends BaseEntity {
     private Instant passwordChangedAt;
 
     @Nullable
+    @OptimisticLock(excluded = true)
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
     @Nullable
-    @Column(name = "avatar_url", length = 500)
-    private String avatarUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "school_id")
+    private School school;
+
+    @Nullable
+    @Column(length = 300)
+    private String bio;
+
+    /** Object key prefix of the avatar: files are {avatarKey}-256.webp and -64.webp; null = initials avatar */
+    @Nullable
+    @Column(name = "avatar_key", length = 255)
+    private String avatarKey;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 5)
@@ -109,7 +141,7 @@ public class User extends BaseEntity {
             String email, String fullName, String userCode, SystemRole systemRole, @Nullable UUID createdBy) {
         User user = new User();
         user.email = email;
-        user.fullName = fullName;
+        user.changeFullName(fullName);
         user.userCode = userCode;
         user.systemRole = systemRole;
         user.status = UserStatus.PENDING_ACTIVATION;
@@ -139,6 +171,10 @@ public class User extends BaseEntity {
 
     public boolean hasPassword() {
         return passwordHash != null;
+    }
+
+    public boolean isLocked() {
+        return status == UserStatus.LOCKED;
     }
 
     public boolean isTemporarilyLocked(Instant now) {
@@ -187,6 +223,53 @@ public class User extends BaseEntity {
 
     public void changeLanguage(Language newLanguage) {
         language = newLanguage;
+    }
+
+    /** @param normalizedFullName already trimmed and collapsed (BR-USER-01) */
+    public void changeFullName(String normalizedFullName) {
+        fullName = normalizedFullName;
+        fullNameSearch = SearchNormalizer.toSearchKey(normalizedFullName);
+    }
+
+    public void changeUserCode(String normalizedUserCode) {
+        userCode = normalizedUserCode;
+    }
+
+    /** Only while the account waits for activation (BR-USER-08); the caller issues a new activation link. */
+    public void changeEmail(String normalizedEmail) {
+        if (!isPendingActivation()) {
+            throw new IllegalStateException("Email can only change while the account is pending activation");
+        }
+        email = normalizedEmail;
+    }
+
+    public void changeSchool(@Nullable School newSchool) {
+        school = newSchool;
+    }
+
+    public void changeBio(@Nullable String newBio) {
+        bio = newBio;
+    }
+
+    public void changeAvatarKey(@Nullable String newAvatarKey) {
+        avatarKey = newAvatarKey;
+    }
+
+    /** Admin lock (BR-USER-11); the caller revokes the sessions and pending email tokens. */
+    public void lock(String reason, UUID adminId, Instant now) {
+        status = UserStatus.LOCKED;
+        lockedAt = now;
+        lockedReason = reason;
+        lockedBy = adminId;
+    }
+
+    /** Back to ACTIVE when a password exists, otherwise PENDING_ACTIVATION; clears every lock (BR-USER-12). */
+    public void unlock() {
+        status = hasPassword() ? UserStatus.ACTIVE : UserStatus.PENDING_ACTIVATION;
+        lockedAt = null;
+        lockedReason = null;
+        lockedBy = null;
+        clearTemporaryLock();
     }
 
     private void clearTemporaryLock() {

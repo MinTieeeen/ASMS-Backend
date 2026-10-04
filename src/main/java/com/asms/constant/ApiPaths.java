@@ -17,11 +17,16 @@ public final class ApiPaths {
     public static final String GROUPS = API_V1 + "/groups";
     public static final String ADMIN = API_V1 + "/admin";
     public static final String ADMIN_USERS = ADMIN + "/users";
+    public static final String SCHOOLS = API_V1 + "/schools";
+    public static final String HOLIDAYS = API_V1 + "/holidays";
 
     /** Sub-paths of {@link #USERS}. */
     public static final class Users {
 
         public static final String ME_LANGUAGE = "/me/language";
+        public static final String ME_PROFILE = "/me/profile";
+        public static final String ME_AVATAR = "/me/avatar";
+        public static final String PROFILE = "/{userId}/profile";
 
         private Users() {}
     }

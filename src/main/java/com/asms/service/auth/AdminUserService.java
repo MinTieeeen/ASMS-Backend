@@ -6,6 +6,7 @@ import com.asms.dto.admin.AdminUserResponse;
 import com.asms.dto.admin.CreateUserRequest;
 import com.asms.dto.common.ClientInfo;
 import com.asms.dto.common.PageResponse;
+import com.asms.entity.admin.AdminAuditAction;
 import com.asms.entity.auth.AuthEventType;
 import com.asms.entity.auth.UserTokenType;
 import com.asms.entity.user.Language;
@@ -20,11 +21,16 @@ import com.asms.repository.user.UserRepository;
 import com.asms.repository.user.UserSpecifications;
 import com.asms.security.RateLimitPolicy;
 import com.asms.security.RateLimitService;
+import com.asms.service.admin.AdminAuditService;
+import com.asms.service.admin.AdminAuditService.AuditEntry;
+import com.asms.service.admin.AuditChanges;
 import com.asms.util.EmailNormalizer;
+import com.asms.util.SearchNormalizer;
 import com.asms.util.UserCodeNormalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +65,7 @@ public class AdminUserService {
     private static final String USER_CODE_CONSTRAINT = "uq_users_user_code";
 
     private final UserRepository userRepository;
+    private final AdminAuditService auditService;
     private final UserTokenService userTokenService;
     private final AuthMailService mailService;
     private final RateLimitService rateLimitService;
@@ -75,7 +82,7 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse createUser(UUID adminId, CreateUserRequest request, ClientInfo client) {
         String email = EmailNormalizer.normalize(request.email());
-        String fullName = request.fullName().strip();
+        String fullName = Objects.requireNonNullElse(SearchNormalizer.collapseWhitespace(request.fullName()), "");
         String userCode = UserCodeNormalizer.normalize(request.userCode());
         validate(fullName, userCode);
         if (userRepository.existsByEmail(email)) {
@@ -91,7 +98,17 @@ public class AdminUserService {
         UserTokenService.IssuedToken token =
                 userTokenService.issue(user, UserTokenType.ACTIVATION, adminId, client.ipAddress());
         mailService.sendActivation(user, token.rawToken(), token.expiresAt());
-        // TODO(F12.07): also write admin_audit_logs once the admin module (M12) exists
+        auditService.record(
+                AuditEntry.onUser(
+                        adminId,
+                        AdminAuditAction.USER_CREATED,
+                        user.getId(),
+                        AuditChanges.create()
+                                .created("email", email)
+                                .created("fullName", fullName)
+                                .created("userCode", userCode)
+                                .created("systemRole", request.systemRole())),
+                client);
         events.publish(AuthEventOccurred.of(AuthEventType.USER_CREATED, client)
                 .withUser(user.getId())
                 .withActor(adminId)
@@ -117,6 +134,11 @@ public class AdminUserService {
         UserTokenService.IssuedToken token =
                 userTokenService.issue(user, UserTokenType.ACTIVATION, adminId, client.ipAddress());
         mailService.sendActivation(user, token.rawToken(), token.expiresAt());
+        auditService.record(
+                AuditEntry.onUser(adminId, AdminAuditAction.ACTIVATION_RESENT, userId, AuditChanges.create())
+                        .withMetadata(
+                                Map.of("activationExpiresAt", token.expiresAt().toString())),
+                client);
         events.publish(AuthEventOccurred.of(AuthEventType.ACTIVATION_RESENT, client)
                 .withUser(userId)
                 .withActor(adminId)

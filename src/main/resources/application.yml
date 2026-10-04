@@ -32,6 +32,7 @@ spring:
     web:
       pageable:
         max-page-size: 100 # API conventions: enforce a maximum page size
+        one-indexed-parameters: true # ?page=1 is the first page (Module 2 API conventions)
     redis:
       # Short timeouts: when Redis is down, auth keeps working without blocklist and rate limits (NFR-AUTH-10)
       timeout: 1s
@@ -110,6 +111,13 @@ app:
       secure: ${APP_AUTH_COOKIE_SECURE:true} # NFR-AUTH-05
   mail:
     from: ${APP_MAIL_FROM:randy2032005@gmail.com}
+  storage: # Avatars on S3-compatible storage (Cloudflare R2 / AWS S3)
+    endpoint: ${STORAGE_ENDPOINT:}
+    region: ${STORAGE_REGION:auto}
+    bucket: ${STORAGE_BUCKET:}
+    access-key: ${STORAGE_ACCESS_KEY:}
+    secret-key: ${STORAGE_SECRET_KEY:}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
   bootstrap-admin: # FR-AUTH-24
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
     user-code: ${APP_BOOTSTRAP_ADMIN_USER_CODE:admin}

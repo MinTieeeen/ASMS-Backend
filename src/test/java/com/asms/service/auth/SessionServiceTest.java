@@ -26,6 +26,7 @@ import com.asms.repository.auth.RefreshTokenRepository;
 import com.asms.repository.auth.UserSessionRepository;
 import com.asms.security.JwtTokenService;
 import com.asms.security.RevokedSessionStore;
+import com.asms.service.user.AvatarUrlResolver;
 import com.asms.support.TestProperties;
 import com.asms.support.TestUserCodes;
 import com.asms.util.TokenHasher;
@@ -67,7 +68,7 @@ class SessionServiceTest {
                 revokedSessionStore,
                 deviceLabelParser,
                 events,
-                new UserMapperImpl(),
+                new UserMapperImpl(new AvatarUrlResolver(TestProperties.appProperties())),
                 new SessionMapperImpl(),
                 TestProperties.appProperties(),
                 Clock.fixed(NOW, ZoneOffset.UTC));

@@ -141,7 +141,10 @@ public class PasswordService {
     @Transactional(noRollbackFor = BusinessException.class)
     public void changePassword(UUID userId, UUID sessionId, ChangePasswordRequest request, ClientInfo client) {
         rateLimitService.check(RateLimitPolicy.CHANGE_PASSWORD_USER, userId.toString());
-        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        // Row lock: a wrong current password counts towards the lockout (BR-AUTH-04), outside @Version
+        User user = userRepository
+                .findByIdForUpdate(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         Instant now = Instant.now(clock);
         if (!user.hasPassword() || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             recordWrongCurrentPassword(user, sessionId, client, now);

@@ -56,6 +56,34 @@ public enum ErrorCode {
     USER_EMAIL_EXISTS(HttpStatus.CONFLICT, "Email đã được sử dụng"),
     USER_CODE_EXISTS(HttpStatus.CONFLICT, "ID người dùng đã được sử dụng"),
     USER_NOT_PENDING(HttpStatus.CONFLICT, "Tài khoản không ở trạng thái chờ kích hoạt"),
+    USER_VERSION_CONFLICT(HttpStatus.CONFLICT, "Thông tin đã được cập nhật ở nơi khác (BR-USER-14)"),
+    USER_EMAIL_CHANGE_NOT_ALLOWED(HttpStatus.CONFLICT, "Chỉ đổi được email khi tài khoản chờ kích hoạt (BR-USER-08)"),
+    USER_SELF_ACTION_FORBIDDEN(HttpStatus.BAD_REQUEST, "Không thực hiện được thao tác này với chính mình (BR-USER-09)"),
+    USER_LAST_ADMIN(HttpStatus.CONFLICT, "Hệ thống cần ít nhất một quản trị viên đang hoạt động (BR-USER-10)"),
+    USER_ALREADY_LOCKED(HttpStatus.CONFLICT, "Tài khoản đã bị khóa"),
+    USER_NOT_LOCKED(HttpStatus.CONFLICT, "Tài khoản không bị khóa"),
+
+    // ===== Avatar =====
+    AVATAR_UNSUPPORTED_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Chỉ nhận ảnh JPEG, PNG hoặc WebP (BR-USER-07)"),
+    AVATAR_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Ảnh lớn hơn 5 MB (BR-USER-07)"),
+    AVATAR_INVALID_IMAGE(HttpStatus.BAD_REQUEST, "Ảnh hỏng, kích thước hoặc vùng cắt không hợp lệ (BR-USER-07)"),
+
+    // ===== Catalogs =====
+    SCHOOL_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy trường"),
+    SCHOOL_CODE_EXISTS(HttpStatus.CONFLICT, "Mã trường đã có"),
+    SCHOOL_NAME_EXISTS(HttpStatus.CONFLICT, "Tên trường đã có"),
+    SCHOOL_IN_USE(HttpStatus.CONFLICT, "Trường đang có người dùng, hãy chuyển sang ngừng dùng"),
+    SCHOOL_VERSION_CONFLICT(HttpStatus.CONFLICT, "Trường đã được sửa ở nơi khác"),
+    HOLIDAY_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy ngày nghỉ"),
+    HOLIDAY_OVERLAP(HttpStatus.CONFLICT, "Khoảng ngày chồng lên ngày nghỉ đã có"),
+    HOLIDAY_VERSION_CONFLICT(HttpStatus.CONFLICT, "Ngày nghỉ đã được sửa ở nơi khác"),
+
+    // ===== GitHub =====
+    GITHUB_ALREADY_CONNECTED(HttpStatus.CONFLICT, "Đã kết nối GitHub, hãy ngắt kết nối trước"),
+    GITHUB_NOT_CONNECTED(HttpStatus.NOT_FOUND, "Chưa kết nối GitHub"),
+    GITHUB_STATE_INVALID(HttpStatus.BAD_REQUEST, "Phiên kết nối GitHub không hợp lệ hoặc đã hết hạn"),
+    GITHUB_ACCOUNT_IN_USE(HttpStatus.CONFLICT, "Tài khoản GitHub đã liên kết với người dùng khác"),
+    GITHUB_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "GitHub không phản hồi"),
 
     // ===== Group =====
     GROUP_FULL(HttpStatus.CONFLICT, "Nhóm đã đủ thành viên (BR02)"),

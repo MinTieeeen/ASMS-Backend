@@ -78,6 +78,7 @@ class PasswordServiceTest {
         when(passwordEncoder.encode(NEW)).thenReturn("new-hash");
         when(rateLimitService.tryConsume(any(), anyString())).thenReturn(true);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(user.getId())).thenReturn(Optional.of(user));
     }
 
     @Test

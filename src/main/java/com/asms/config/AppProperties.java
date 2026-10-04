@@ -33,7 +33,22 @@ public record AppProperties(
         @Valid @NotNull Cors cors,
         @Valid @NotNull Auth auth,
         @Valid @NotNull BootstrapAdmin bootstrapAdmin,
-        @Valid @NotNull Mail mail) {
+        @Valid @NotNull Mail mail,
+        @Valid @NotNull Storage storage) {
+
+    /**
+     * S3-compatible object storage of avatars (Cloudflare R2 or AWS S3, section 8.3 of the Module 2 spec). Every value
+     * is optional so that the application starts without it; avatar uploads then fail until it is configured.
+     *
+     * @param publicBaseUrl base of the public avatar URLs, e.g. https://cdn.asms.vn (R2 public bucket or custom domain)
+     */
+    public record Storage(
+            @Nullable String endpoint,
+            @Nullable String region,
+            @Nullable String bucket,
+            @Nullable String accessKey,
+            @Nullable String secretKey,
+            @Nullable String publicBaseUrl) {}
 
     /** Outgoing email settings (section 7.9). {@code frontendUrl} is the base of every link in emails. */
     public record Mail(@NotBlank String from) {}

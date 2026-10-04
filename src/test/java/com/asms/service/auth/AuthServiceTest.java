@@ -28,6 +28,7 @@ import com.asms.mapper.user.UserMapperImpl;
 import com.asms.repository.user.UserRepository;
 import com.asms.security.RateLimitPolicy;
 import com.asms.security.RateLimitService;
+import com.asms.service.user.AvatarUrlResolver;
 import com.asms.support.TestProperties;
 import java.time.Clock;
 import java.time.Duration;
@@ -67,7 +68,7 @@ class AuthServiceTest {
                 rateLimitService,
                 passwordEncoder,
                 events,
-                new UserMapperImpl(),
+                new UserMapperImpl(new AvatarUrlResolver(TestProperties.appProperties())),
                 TestProperties.appProperties(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -76,20 +77,20 @@ class AuthServiceTest {
     @DisplayName("FR-AUTH-01: the user ID is trimmed and uppercased before lookup")
     void login_shouldNormalizeUserCode() {
         User user = activeUser();
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
         when(sessionService.openSession(user, true, CLIENT)).thenReturn(issued());
 
         authService.login(new LoginRequest("  se170001 ", PASSWORD, true), CLIENT);
 
-        verify(userRepository).findByUserCode(USER_CODE);
+        verify(userRepository).findByUserCodeForUpdate(USER_CODE);
     }
 
     @Test
     void login_shouldOpenSessionAndResetCounter_whenCredentialsValid() {
         User user = activeUser();
         user.recordFailedLogin(NOW.minusSeconds(10));
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
         when(sessionService.openSession(user, false, CLIENT)).thenReturn(issued());
 
@@ -104,7 +105,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("NFR-AUTH-06: unknown user ID still runs a password hash and returns the generic error")
     void login_shouldHashDummyPassword_whenUserCodeUnknown() {
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.empty());
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
@@ -116,7 +117,7 @@ class AuthServiceTest {
     @Test
     void login_shouldCountFailure_whenPasswordWrong() {
         User user = activeUser();
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
@@ -132,7 +133,7 @@ class AuthServiceTest {
         for (int i = 0; i < 4; i++) {
             user.recordFailedLogin(NOW.minusSeconds(60));
         }
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .isInstanceOfSatisfying(BusinessException.class, e -> {
@@ -147,7 +148,7 @@ class AuthServiceTest {
     void login_shouldRejectWithoutPasswordCheck_whenTemporarilyLocked() {
         User user = activeUser();
         user.lockTemporarily(NOW.plusSeconds(120));
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .isInstanceOfSatisfying(BusinessException.class, e -> {
@@ -162,7 +163,7 @@ class AuthServiceTest {
     void login_shouldFail_whenAccountPendingActivation() {
         User user = User.createPending(EMAIL, "Nguyen Van A", USER_CODE, SystemRole.USER, null);
         user.setId(UUID.randomUUID());
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
@@ -175,7 +176,7 @@ class AuthServiceTest {
     void login_shouldRejectLockedAccount_afterPasswordCheck() {
         User user = activeUser();
         ReflectionTestUtils.setField(user, "status", UserStatus.LOCKED);
-        when(userRepository.findByUserCode(USER_CODE)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserCodeForUpdate(USER_CODE)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
@@ -194,7 +195,7 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(login(), CLIENT))
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.AUTH_RATE_LIMITED);
-        verify(userRepository, never()).findByUserCode(anyString());
+        verify(userRepository, never()).findByUserCodeForUpdate(anyString());
         assertThat(publishedEvent().metadata()).containsEntry("reason", LoginFailedReason.RATE_LIMITED);
     }
 

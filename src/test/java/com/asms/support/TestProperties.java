@@ -39,6 +39,7 @@ public final class TestProperties {
                         Duration.ofDays(180),
                         new AppProperties.Cookie("rt", "/api/v1/auth", null, false)),
                 new AppProperties.BootstrapAdmin(null, "admin", null, "Quản trị viên"),
-                new AppProperties.Mail("ASMS <no-reply@asms.local>"));
+                new AppProperties.Mail("ASMS <no-reply@asms.local>"),
+                new AppProperties.Storage(null, "auto", "avatars", null, null, "https://cdn.test"));
     }
 }

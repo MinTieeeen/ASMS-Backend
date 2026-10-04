@@ -24,5 +24,7 @@ public enum SessionRevokeReason {
     /** Oldest session evicted when the user exceeds the session limit (BR-AUTH-08). */
     SESSION_LIMIT,
     /** Account locked by an Admin, or temporarily locked while changing the password (UC-AUTH-06). */
-    ACCOUNT_LOCKED
+    ACCOUNT_LOCKED,
+    /** An Admin logged the user out of every device (UC-USER-09) */
+    ADMIN_REVOKED
 }

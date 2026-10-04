@@ -15,6 +15,7 @@ import com.asms.dto.admin.ActivationEmailResponse;
 import com.asms.dto.admin.AdminUserResponse;
 import com.asms.dto.admin.CreateUserRequest;
 import com.asms.dto.common.ClientInfo;
+import com.asms.entity.admin.AdminAuditAction;
 import com.asms.entity.auth.UserTokenType;
 import com.asms.entity.user.Language;
 import com.asms.entity.user.SystemRole;
@@ -27,6 +28,10 @@ import com.asms.mapper.user.UserMapperImpl;
 import com.asms.repository.user.UserRepository;
 import com.asms.security.RateLimitPolicy;
 import com.asms.security.RateLimitService;
+import com.asms.service.admin.AdminAuditService;
+import com.asms.service.admin.AdminAuditService.AuditEntry;
+import com.asms.service.user.AvatarUrlResolver;
+import com.asms.support.TestProperties;
 import com.asms.support.TestUserCodes;
 import java.time.Instant;
 import java.util.List;
@@ -50,13 +55,20 @@ class AdminUserServiceTest {
     private final AuthMailService mailService = mock(AuthMailService.class);
     private final RateLimitService rateLimitService = mock(RateLimitService.class);
     private final AuthEventPublisher events = mock(AuthEventPublisher.class);
+    private final AdminAuditService auditService = mock(AdminAuditService.class);
 
     private AdminUserService service;
 
     @BeforeEach
     void setUp() {
         service = new AdminUserService(
-                userRepository, userTokenService, mailService, rateLimitService, events, new UserMapperImpl());
+                userRepository,
+                auditService,
+                userTokenService,
+                mailService,
+                rateLimitService,
+                events,
+                new UserMapperImpl(new AvatarUrlResolver(TestProperties.appProperties())));
         when(userRepository.saveAndFlush(any())).thenAnswer(inv -> {
             User user = inv.getArgument(0);
             user.setId(UUID.randomUUID());
@@ -86,6 +98,11 @@ class AdminUserServiceTest {
         assertThat(user.getLanguage()).isEqualTo(Language.VI);
         assertThat(created.status()).isEqualTo(UserStatus.PENDING_ACTIVATION);
         verify(mailService).sendActivation(user, "raw", NOW.plusSeconds(72 * 3600));
+        ArgumentCaptor<AuditEntry> audit = ArgumentCaptor.forClass(AuditEntry.class);
+        verify(auditService).record(audit.capture(), eq(CLIENT));
+        assertThat(audit.getValue().action()).isEqualTo(AdminAuditAction.USER_CREATED);
+        assertThat(audit.getValue().targetId()).isEqualTo(user.getId());
+        assertThat(audit.getValue().changes().asMap()).containsKeys("email", "fullName", "userCode", "systemRole");
     }
 
     @Test

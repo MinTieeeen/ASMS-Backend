@@ -1,5 +1,6 @@
 package com.asms.exception;
 
+import com.asms.constant.ApiPaths;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -68,6 +70,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
         return ProblemDetailFactory.create(ErrorCode.INTERNAL_ERROR);
+    }
+
+    /** A photo above the 25 MB multipart limit gets the avatar code too (BR-USER-07) */
+    @Override
+    @Nullable
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        if (request.getDescription(false).endsWith(ApiPaths.USERS + ApiPaths.Users.ME_AVATAR)) {
+            ErrorCode code = ErrorCode.AVATAR_TOO_LARGE;
+            return ResponseEntity.status(code.getStatus()).body(ProblemDetailFactory.create(code));
+        }
+        return super.handleMaxUploadSizeExceededException(ex, headers, status, request);
     }
 
     @Override
